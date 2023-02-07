@@ -13,7 +13,7 @@ public class ImageTransparentFunc
         [BlobTrigger("countdownimages/{name}")] Stream original,
 
         // Place processed images into /transparent-cd-images/ container
-        [Blob("transparent-cd-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
+        [Blob("temp-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
 
         string name,
         ILogger log)
@@ -21,13 +21,14 @@ public class ImageTransparentFunc
         // Check if transparent file already exists
         bool transparentImageAlreadyExists = outClient.Exists();
 
-        // If force overwrite is also set to false, we can end the task here, else continue
+        // If image already exists we can end the task here
         const bool forceOverwriteImages = false;
         if (transparentImageAlreadyExists && !forceOverwriteImages)
         {
             log.LogInformation(name + " already has a transparent image processed");
             return Task.CompletedTask;
         }
+
         // Create write stream from client
         Stream outStream = outClient.OpenWrite(true);
 
@@ -51,9 +52,12 @@ public class ImageTransparentFunc
 
                 // Write the image to azure storage blob
                 image.Write(outStream);
+                outStream.Dispose();
 
-                // If image conversion is successfuly, log message
-                log.LogInformation(name + " successfully converted to transparent image");
+                // If image conversion is successful, log message
+                long imageByteLength = outClient.OpenRead().Length;
+                log.LogWarning("Image: " + name + " - width: " + image.Width +
+                 "px - output size: " + formatBytesToString(imageByteLength));
             }
         }
         catch (System.Exception e)
@@ -62,5 +66,15 @@ public class ImageTransparentFunc
             throw;
         }
         return Task.CompletedTask;
+    }
+
+    // Takes a byte length such as 38260 and returns a nicer string such as 38 kb
+    private static string formatBytesToString(long byteLength)
+    {
+        string longString = byteLength.ToString();
+        if (byteLength < 1) return "0 kb";
+        if (byteLength > 1 && byteLength < 1000) return "1 kb";
+        if (byteLength > 1000 && byteLength < 1000000) return longString.Substring(0, longString.Length - 3) + " kb";
+        else return longString.Substring(0, longString.Length - 6) + " mb";
     }
 }
