@@ -15,22 +15,22 @@ public class ImageTransparentFunc
         // Place processed images into /transparent-cd-images/ container
         [Blob("transparent-cd-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
 
+        // Place smaller thumbnails into /transparent-cd-images/180x/ container
+        [Blob("transparent-cd-images/180x/{name}", FileAccess.Write)] BlockBlobClient thumbnailClient,
+
         string name,
         ILogger log)
     {
-        // Check if transparent file already exists
-        bool transparentImageAlreadyExists = outClient.Exists();
+        // Check if transparent files already exist
+        bool transparentImageExists = outClient.Exists();
+        bool thumbnailExists = thumbnailClient.Exists();
 
-        // If image already exists we can end the task here
-        const bool forceOverwriteImages = false;
-        if (transparentImageAlreadyExists && !forceOverwriteImages)
+        // If image and thumbnail already exist we can end the task here
+        if (transparentImageExists && thumbnailExists)
         {
             log.LogInformation(name + " already has a transparent image processed");
             return Task.CompletedTask;
         }
-
-        // Create write stream from client
-        Stream outStream = outClient.OpenWrite(true);
 
         try
         {
@@ -50,14 +50,30 @@ public class ImageTransparentFunc
                 image.Quality = 60;
                 image.Format = MagickFormat.WebP;
 
-                // Write the image to azure storage blob
-                image.Write(outStream);
-                outStream.Dispose();
+                // Write the images using streams
+                if (!transparentImageExists)
+                {
+                    Stream outStream = outClient.OpenWrite(true);
+                    image.Write(outStream);
+                    outStream.Dispose();
+                }
+
+                if (!thumbnailExists)
+                {
+                    Stream thumbnailStream = thumbnailClient.OpenWrite(true);
+                    image.Scale(180, 180);
+                    image.Write(thumbnailStream);
+                    thumbnailStream.Dispose();
+                }
 
                 // If image conversion is successful, log message
                 long imageByteLength = outClient.OpenRead().Length;
-                log.LogWarning("Image: " + name + " - width: " + image.Width +
-                 "px - output size: " + formatBytesToString(imageByteLength));
+                long thumbnailByteLength = thumbnailClient.OpenRead().Length;
+                log.LogWarning(
+                    "Image: " + name + " - width: " + image.Width +
+                    "px - output size: " + formatBytesToString(imageByteLength) +
+                    " thumbnail size: " + formatBytesToString(thumbnailByteLength)
+                 );
             }
         }
         catch (System.Exception e)
@@ -68,13 +84,14 @@ public class ImageTransparentFunc
         return Task.CompletedTask;
     }
 
-    // Takes a byte length such as 38260 and returns a nicer string such as 38 kb
+    // Takes a byte length such as 38043260 and returns a nicer string such as 38 MB
     private static string formatBytesToString(long byteLength)
     {
         string longString = byteLength.ToString();
-        if (byteLength < 1) return "0 kb";
-        if (byteLength > 1 && byteLength < 1000) return "1 kb";
-        if (byteLength > 1000 && byteLength < 1000000) return longString.Substring(0, longString.Length - 3) + " kb";
-        else return longString.Substring(0, longString.Length - 6) + " mb";
+        if (byteLength < 1) return "0 KB";
+        if (byteLength > 1 && byteLength < 1000) return "1 KB";
+        if (byteLength > 1000 && byteLength < 1000000)
+            return longString.Substring(0, longString.Length - 3) + " KB";
+        else return longString.Substring(0, longString.Length - 6) + " MB";
     }
 }
