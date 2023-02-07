@@ -13,7 +13,7 @@ public class ImageTransparentFunc
         [BlobTrigger("countdownimages/{name}")] Stream original,
 
         // Place processed images into /transparent-cd-images/ container
-        [Blob("temp-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
+        [Blob("transparent-cd-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
 
         string name,
         ILogger log)
