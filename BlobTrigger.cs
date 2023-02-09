@@ -34,7 +34,7 @@ public class ImageTransparentFunc
 
         try
         {
-            // Load into image magick
+            // Load into ImageMagick
             using (var image = new MagickImage(original))
             {
                 // The following converts white pixels into transparent pixels, with a fuzz of 3
@@ -71,8 +71,8 @@ public class ImageTransparentFunc
                 long thumbnailByteLength = thumbnailClient.OpenRead().Length;
                 log.LogWarning(
                     "Image: " + name + " - width: " + image.Width +
-                    "px - output size: " + formatBytesToString(imageByteLength) +
-                    " thumbnail size: " + formatBytesToString(thumbnailByteLength)
+                    "px - output size: " + printFileSize(imageByteLength) +
+                    " thumbnail size: " + printFileSize(thumbnailByteLength)
                  );
             }
         }
@@ -85,12 +85,12 @@ public class ImageTransparentFunc
     }
 
     // Takes a byte length such as 38043260 and returns a nicer string such as 38 MB
-    private static string formatBytesToString(long byteLength)
+    private static string printFileSize(long byteLength)
     {
         string longString = byteLength.ToString();
         if (byteLength < 1) return "0 KB";
-        if (byteLength > 1 && byteLength < 1000) return "1 KB";
-        if (byteLength > 1000 && byteLength < 1000000)
+        if (byteLength >= 1 && byteLength < 1000) return "1 KB";
+        if (byteLength >= 1000 && byteLength < 1000000)
             return longString.Substring(0, longString.Length - 3) + " KB";
         else return longString.Substring(0, longString.Length - 6) + " MB";
     }
