@@ -28,7 +28,6 @@ public class ImageTransparentFunc
         // If image and thumbnail already exist we can end the task here
         if (transparentImageExists && thumbnailExists)
         {
-            log.LogInformation(name + " already has a transparent image processed");
             return Task.CompletedTask;
         }
 
@@ -87,11 +86,15 @@ public class ImageTransparentFunc
     // Takes a byte length such as 38043260 and returns a nicer string such as 38 MB
     private static string printFileSize(long byteLength)
     {
-        string longString = byteLength.ToString();
         if (byteLength < 1) return "0 KB";
+
         if (byteLength >= 1 && byteLength < 1000) return "1 KB";
+
+        string longString = byteLength.ToString();
+
         if (byteLength >= 1000 && byteLength < 1000000)
             return longString.Substring(0, longString.Length - 3) + " KB";
+
         else return longString.Substring(0, longString.Length - 6) + " MB";
     }
 }
