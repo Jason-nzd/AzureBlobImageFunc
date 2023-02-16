@@ -1,6 +1,6 @@
 # Image Transparent Func
 
-This is an Azure Serverless Function that takes opaque images with white backgrounds and converts them to transparent images. Image Magick is used for image processing and the default output is tranparent WEBP format.
+This is an Azure Serverless Function that takes opaque images with white backgrounds and converts them to transparent images. ImageMagick is used for image processing and the default output is a transparent WebP format.
 
 A Blob Trigger pointing to an existing Azure Storage Container is used to start the function. This is triggered when new images are placed in the container.
 
@@ -16,7 +16,7 @@ The blob trigger binding and blob output binding can be changed in `BlobTrigger.
 [Blob("transparentImagesGoHere/{name}", FileAccess.Write)] BlockBlobClient outClient,
 ```
 
-`local.settings.json` should contain at least:
+`local.settings.json` needs to be created in the root folder and should contain:
 
 ```json
 {
@@ -26,6 +26,8 @@ The blob trigger binding and blob output binding can be changed in `BlobTrigger.
   }
 }
 ```
+
+The function can run locally using Azure Function Tools or deployed to an existing Azure Function App.
 
 ## Example Input & Output
 
