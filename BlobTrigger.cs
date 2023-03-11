@@ -5,15 +5,15 @@ using Microsoft.Extensions.Logging;
 using ImageMagick;
 using Azure.Storage.Blobs.Specialized;
 
-public class ImageTransparentFunc
+public class AzureBlobImageFunc
 {
-    [FunctionName("ImageTransparentFunc")]
+    [FunctionName("AzureBlobImageFunc")]
     public static Task Run(
-        // Trigger off opaque images placed into /countdownimages/ container
-        [BlobTrigger("countdownimages/{name}")] Stream original,
+        // Trigger off opaque images placed into /trigger-container/
+        [BlobTrigger("trigger-container/{name}")] Stream original,
 
-        // Place processed images into /transparent-cd-images/ container
-        [Blob("transparent-cd-images/{name}", FileAccess.Write)] BlockBlobClient outClient,
+        // Place processed images into /processed-container/
+        [Blob("processed-container/{name}", FileAccess.Write)] BlockBlobClient outClient,
 
         string name,
         ILogger log)
@@ -44,7 +44,6 @@ public class ImageTransparentFunc
                 Stream outStream = outClient.OpenWrite(true);
                 image.Write(outStream);
                 outStream.Dispose();
-
 
                 // If image conversion is successful, log message
                 long imageByteLength = outClient.OpenRead().Length;
